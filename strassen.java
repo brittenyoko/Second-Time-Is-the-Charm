@@ -4,10 +4,10 @@ import java.util.*;
 
 public class Strassen {
   public static int crossoverPoint;
-  public static final int[] TEST_NS = {8,16,32,64,128,256};
+  public static final int[] TEST_NS = {8,16,32,64,128,256,512,1024};
 
-  // traditional matrix multiply
-  private static int[][] matrixMultiply(int[][] m1, int[][] m2) {
+  // standard matrix multiply
+  private static int[][] stdMultiply(int[][] m1, int[][] m2) {
     int n = m1.length;
     if (n == 0) {
       return m1;
@@ -37,13 +37,12 @@ public class Strassen {
       return res;
     }
     if (n <= crossoverPoint) {
-      return matrixMultiply(m1, m2);
+      return stdMultiply(m1, m2);
     }
-    // pad matrices with zeros if necessary to reach size that is power of 2
-    double log2n = Math.log(n) / Math.log(2);
-    boolean needToPad = Math.floor(log2n) != Math.ceil(log2n);
+    // pad matrices with zeros if necessary to reach even size
+    boolean needToPad = n % 2 != 0;
     if (needToPad) {
-      n = (int) Math.pow(2, Math.ceil(log2n));
+      n += 1;
       m1 = padMatrix(m1, n);
       m2 = padMatrix(m2, n);
     }
@@ -90,8 +89,10 @@ public class Strassen {
     return res;
   }
 
-  // pads matrix with zeros until it reaches specified size
+  // pads matrix with zeros until it reaches nearest even size if odd
   private static int[][] padMatrix(int[][] m, int n) {
+    // double log2n = Math.log(n) / Math.log(2);
+    // boolean needToPad = Math.floor(log2n) != Math.ceil(log2n);
     int[][] m_new = new int[n][n];
     for (int i = 0; i < m.length; i++) {
       m_new[i] = Arrays.copyOf(m[i], n);
@@ -170,8 +171,18 @@ public class Strassen {
     System.out.println();
   }
 
+  // checks that two matrices are equal
+  private static boolean areEqual(int[][] m1, int[][] m2) {
+    for (int i = 0; i < m1.length; i++) {
+      if (!Arrays.equals(m1[i], m2[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   // gets matrix of size n randomly filled with 0s or 1s
-  public static int[][] getRandomMatrix(int n) {
+  private static int[][] getRandomMatrix(int n) {
     SplittableRandom rand = new SplittableRandom();
     int[][] m = new int[n][n];
     for (int i = 0; i < n; i++) {
@@ -182,34 +193,37 @@ public class Strassen {
     return m;
   }
 
-  public static void findCrossoverPoint() {
+  private static void findCrossoverPoint() {
     for (int i = 0; i < TEST_NS.length; i++) {
-      int n = TEST_NS[i];
+      int n = TEST_NS[i] + 5;
       System.out.println(String.format("SIZE %d MATRIX", n));
       int[][] m1 = getRandomMatrix(n);
       int[][] m2 = getRandomMatrix(n);
       // time traditional and strassen multiplication and compare the two
       double startTime1 = System.nanoTime();
-      int[][] normal_res = matrixMultiply(m1, m2);
-      double normalMultTimeMs = (System.nanoTime() - startTime1) / 1e6;
+      int[][] std_res = stdMultiply(m1, m2);
+      double stdMultTimeMs = (System.nanoTime() - startTime1) / 1e6;
+      System.out.println(String.format("Standard time: %.06f ms", stdMultTimeMs));
 
       double startTime2 = System.nanoTime();
       int[][] strassen_res = strassenMultiply(m1, m2);
       double strassenTimeMs = (System.nanoTime() - startTime2) / 1e6;
-
-      System.out.println(String.format("Normal time: %.06f ms", normalMultTimeMs));
       System.out.println(String.format("Strassen time: %.06f ms", strassenTimeMs));
+
       System.out.println(String.format("%s faster",
-        normalMultTimeMs < strassenTimeMs ? "NORMAL" : "STRASSEN"));
+        stdMultTimeMs < strassenTimeMs ? "STANDARD" : "STRASSEN"));
       System.out.println();
     }
   }
 
   public static void main(String[] args) {
-    // int m1[][] = {{3,2,4},{5,1,9},{2,3,0}};
-    // int m2[][] = {{1,0,2},{6,7,1},{3,9,0}};
-    // printMatrix(matrixMultiply(m1, m2));
-    // printMatrix(strassenMultiply(m1, m2));
-    findCrossoverPoint();
+    int[][] m1 = getRandomMatrix(9);
+    int[][] m2 = getRandomMatrix(9);
+    int[][] std_res = stdMultiply(m1, m2);
+    int[][] strassen_res = strassenMultiply(m1, m2);
+    printMatrix(std_res);
+    printMatrix(strassen_res);
+    System.out.println(areEqual(std_res, strassen_res) ? "EQUAL" : "NOT EQUAL!!!");
+    // findCrossoverPoint();
   }
 }
