@@ -3,7 +3,8 @@ package prog2;
 import java.util.*;
 
 public class Strassen {
-  public static final int[] TEST_NS = {8,16,32,64,128,256,512,1024, 2048};
+  private static final SplittableRandom rand = new SplittableRandom();
+  private static final int[] TEST_NS = {8,16,32,64,128,256,512,1024,2048};
 
   // standard matrix multiply
   private static int[][] stdMultiply(int[][] m1, int[][] m2) {
@@ -21,11 +22,6 @@ public class Strassen {
       }
     }
     return res;
-  }
-
-  // strassen multiplication with no crossover point
-  private static int[][] strassenMultiply(int[][] m1, int[][] m2) {
-    strassenMultiply(m1, m2, 0);
   }
 
   // strassen multiplication with given crossover point
@@ -54,13 +50,14 @@ public class Strassen {
     int[][][] subs2 = getSubmatrices(m2);
     int[][][] prods = new int[7][n][n];
     // get products
-    prods[0] = strassenMultiply(subs1[0], sub(subs2[1], subs2[3]));
-    prods[1] = strassenMultiply(add(subs1[0], subs1[1]), subs2[3]);
-    prods[2] = strassenMultiply(add(subs1[2], subs1[3]), subs2[0]);
-    prods[3] = strassenMultiply(subs1[3], sub(subs2[2], subs2[0]));
-    prods[4] = strassenMultiply(add(subs1[0], subs1[3]), add(subs2[0], subs2[3]));
-    prods[5] = strassenMultiply(sub(subs1[1], subs1[3]), add(subs2[2], subs2[3]));
-    prods[6] = strassenMultiply(sub(subs1[0], subs1[2]), add(subs2[0], subs2[1]));
+    int pt = crossoverPoint;
+    prods[0] = strassenMultiply(subs1[0], sub(subs2[1], subs2[3]), pt);
+    prods[1] = strassenMultiply(add(subs1[0], subs1[1]), subs2[3], pt);
+    prods[2] = strassenMultiply(add(subs1[2], subs1[3]), subs2[0], pt);
+    prods[3] = strassenMultiply(subs1[3], sub(subs2[2], subs2[0]), pt);
+    prods[4] = strassenMultiply(add(subs1[0], subs1[3]), add(subs2[0], subs2[3]), pt);
+    prods[5] = strassenMultiply(sub(subs1[1], subs1[3]), add(subs2[2], subs2[3]), pt);
+    prods[6] = strassenMultiply(sub(subs1[0], subs1[2]), add(subs2[0], subs2[1]), pt);
     // get resulting matrix
     int[][][] res_subs = new int[4][n / 2][n / 2];
     res_subs[0] = add(sub(add(prods[4], prods[3]), prods[1]), prods[5]);
@@ -95,8 +92,6 @@ public class Strassen {
 
   // pads matrix with zeros until it reaches nearest even size if odd
   private static int[][] padMatrix(int[][] m, int n) {
-    // double log2n = Math.log(n) / Math.log(2);
-    // boolean needToPad = Math.floor(log2n) != Math.ceil(log2n);
     int[][] m_new = new int[n][n];
     for (int i = 0; i < m.length; i++) {
       m_new[i] = Arrays.copyOf(m[i], n);
@@ -187,7 +182,6 @@ public class Strassen {
 
   // gets matrix of size n randomly filled with 0s or 1s
   private static int[][] getRandomMatrix(int n) {
-    SplittableRandom rand = new SplittableRandom();
     int[][] m = new int[n][n];
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
@@ -198,42 +192,42 @@ public class Strassen {
   }
 
   private static void findCrossoverPoint() {
-    for (int i = 0; i < TEST_NS.length; i++) {
-      int n = TEST_NS[i] + 1;
-      System.out.println(String.format("SIZE %d MATRIX", n));
-      int[][] m1 = getRandomMatrix(n);
-      int[][] m2 = getRandomMatrix(n);
-      // time traditional and strassen multiplication and compare the two
-      double stdMultTimeMs;
-      if (n > 1100) {
-        stdMultTimeMs = Double.MAX_VALUE;
-        System.out.println("Standard time: N/A");
-      } else {
-        double startTime1 = System.nanoTime();
-        int[][] std_res = stdMultiply(m1, m2);
-        stdMultTimeMs = (System.nanoTime() - startTime1) / 1e6;
-        System.out.println(String.format("Standard time: %.06f ms", stdMultTimeMs));
-      }
-
-      double startTime2 = System.nanoTime();
-      int[][] strassen_res = strassenMultiply(m1, m2);
-      double strassenTimeMs = (System.nanoTime() - startTime2) / 1e6;
-      System.out.println(String.format("Strassen time: %.06f ms", strassenTimeMs));
-
-      System.out.println(String.format("%s faster",
-        stdMultTimeMs < strassenTimeMs ? "STANDARD" : "STRASSEN"));
-      System.out.println();
+    List<Double> avg_times = new ArrayList<>();
+    int n = 512;
+    int trials = 15;
+    int incr = 4;
+    // create random matrices to test on
+    int[][][] matrices = new int[trials * 2][n][n];
+    for (int i = 0; i < matrices.length; i++) {
+      matrices[i] = getRandomMatrix(n);
     }
+    double min_avg_time = Double.MAX_VALUE;
+    int counter = 0;
+    // test different crossover points in increments of 'incr'
+    for (int crossover = 40; crossover < 200; crossover += incr) {
+      System.out.println(String.format("TESTING CROSSOVER AT SIZE %d...",
+        crossover));
+      List<Double> times = new ArrayList<>();
+      for (int i = 0; i < trials; i++) {
+        System.out.print(".");
+        double startTime = System.nanoTime();
+        strassenMultiply(matrices[i * 2], matrices[i * 2 + 1], crossover);
+        times.add((System.nanoTime() - startTime) / 1e6);
+      }
+      // get average time of all the trials
+      double avg = times.stream().mapToDouble(a -> a).average().getAsDouble();
+      System.out.println(String.format("AVG TIME: %.03f ms\n", avg));
+      avg_times.add(avg);
+      min_avg_time = Math.min(min_avg_time, avg);
+    }
+    // find the crossover point that resulted in the lowest avg time
+    int min_index = avg_times.indexOf(min_avg_time);
+    int best_crossover = 40 + incr * min_index;
+    System.out.println("BEST CROSSOVER: " + String.valueOf(best_crossover));
   }
+  // got best as 64, 72
 
   public static void main(String[] args) {
-    // int[][] m1 = getRandomMatrix(9);
-    // int[][] m2 = getRandomMatrix(9);
-    // int[][] std_res = stdMultiply(m1, m2);
-    // int[][] strassen_res = strassenMultiply(m1, m2);
-    // printMatrix(std_res);
-    // printMatrix(strassen_res);
-    // System.out.println(areEqual(std_res, strassen_res) ? "EQUAL" : "NOT EQUAL!!!");
     findCrossoverPoint();
   }
 }
