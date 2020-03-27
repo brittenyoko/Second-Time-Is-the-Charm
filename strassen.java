@@ -7,7 +7,6 @@ public class Strassen {
 
   // traditional matrix multiply
   private static int[][] matrixMultiply(int[][] m1, int[][] m2) {
-    System.out.println("IN MATRIXMULT");
     int n = m1.length;
     if (n == 0) {
       return m1;
@@ -36,7 +35,7 @@ public class Strassen {
       int res[][] = {{m1[0][0] * m2[0][0]}};
       return res;
     }
-    if (n == crossoverPoint) {
+    if (n <= crossoverPoint) {
       return matrixMultiply(m1, m2);
     }
     // pad matrices with zeros if necessary to reach size that is power of 2
