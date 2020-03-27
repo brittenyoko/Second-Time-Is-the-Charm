@@ -3,7 +3,8 @@ package prog2;
 import java.util.*;
 
 public class Strassen {
-  public static int crossoverPoint = -1;
+  public static int crossoverPoint;
+  public static final int[] TEST_NS = {8,16,32,64,128};
 
   // traditional matrix multiply
   private static int[][] matrixMultiply(int[][] m1, int[][] m2) {
@@ -180,11 +181,32 @@ public class Strassen {
     return m;
   }
 
+  public static void findCrossoverPoint() {
+    for (int i = 0; i < TEST_NS.length(), i++) {
+      int n = TEST_NS[i];
+      int[][] m1 = getRandomMatrix(n);
+      int[][] m2 = getRandomMatrix(n);
+      // time traditional and strassen multiplication and see which is faster
+      double startTime = System.nanoTime();
+      int[][] normal_res = matrixMultiply(m1, m2);
+      double normalMultTime = System.nanoTime() - startTime;
+
+      double startTime2 = System.nanoTime();
+      int[][] strassen_res = strassenMultiply(m1, m2);
+      double strassenTime = System.nanoTime() - startTime;
+
+      assert normal_res == strassen_res : "Normal and Strassen Multiply not returning same value"
+      System.out.println(String.format("%s faster for size %d matrix",
+        normalMultTime < strassenTime ? "NORMAL" : "STRASSEN", n));
+    }
+  }
+
   public static void main(String[] args) {
-    int m1[][] = {{3,2,4}, {5,1,9}, {2,3,0}};
-    int m2[][] = {{1,0,2}, {6,7,1}, {3,9,0}};
-    printMatrix(matrixMultiply(m1, m2));
-    System.out.println();
-    printMatrix(strassenMultiply(m1, m2));
+    // int m1[][] = {{3,2,4},{5,1,9},{2,3,0}};
+    // int m2[][] = {{1,0,2},{6,7,1},{3,9,0}};
+    // printMatrix(matrixMultiply(m1, m2));
+    // System.out.println();
+    // printMatrix(strassenMultiply(m1, m2));
+    findCrossoverPoint();
   }
 }
