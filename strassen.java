@@ -3,8 +3,11 @@ package prog2;
 import java.util.*;
 
 public class Strassen {
+  public static int crossoverPoint = -1;
+
   // traditional matrix multiply
   private static int[][] matrixMultiply(int[][] m1, int[][] m2) {
+    System.out.println("IN MATRIXMULT");
     int n = m1.length;
     if (n == 0) {
       return m1;
@@ -33,7 +36,10 @@ public class Strassen {
       int res[][] = {{m1[0][0] * m2[0][0]}};
       return res;
     }
-    // pad matrices with zeros if necessary to reach power of 2 size
+    if (n == crossoverPoint) {
+      return matrixMultiply(m1, m2);
+    }
+    // pad matrices with zeros if necessary to reach size that is power of 2
     double log2n = Math.log(n) / Math.log(2);
     boolean needToPad = Math.floor(log2n) != Math.ceil(log2n);
     if (needToPad) {
