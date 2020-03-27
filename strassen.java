@@ -52,7 +52,7 @@ public class Strassen {
     prods[4] = strassenMultiply(add(subs1[0], subs1[3]), add(subs2[0], subs2[3]));
     prods[5] = strassenMultiply(sub(subs1[1], subs1[3]), add(subs2[2], subs2[3]));
     prods[6] = strassenMultiply(sub(subs1[0], subs1[2]), add(subs2[0], subs2[1]));
-    // calculate product matrix
+    // get resulting matrix
     int[][][] res_subs = new int[4][n / 2][n / 2];
     res_subs[0] = add(sub(add(prods[4], prods[3]), prods[1]), prods[5]);
     res_subs[1] = add(prods[0], prods[1]);
@@ -161,6 +161,18 @@ public class Strassen {
       }
       System.out.println();
     }
+  }
+
+  // gets matrix of size n randomly filled with 0s or 1s
+  public static int[][] getRandomMatrix(int n) {
+    SplittableRandom rand = new SplittableRandom();
+    int[][] m = new int[n][n];
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
+        m[i][j] = rand.nextInt(10) % 2;
+      }
+    }
+    return m;
   }
 
   public static void main(String[] args) {
