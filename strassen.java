@@ -4,7 +4,7 @@ import java.util.*;
 
 public class Strassen {
   public static int crossoverPoint;
-  public static final int[] TEST_NS = {8,16,32,64,128};
+  public static final int[] TEST_NS = {8,16,32,64,128,256};
 
   // traditional matrix multiply
   private static int[][] matrixMultiply(int[][] m1, int[][] m2) {
@@ -167,6 +167,7 @@ public class Strassen {
       }
       System.out.println();
     }
+    System.out.println();
   }
 
   // gets matrix of size n randomly filled with 0s or 1s
@@ -182,22 +183,25 @@ public class Strassen {
   }
 
   public static void findCrossoverPoint() {
-    for (int i = 0; i < TEST_NS.length(), i++) {
+    for (int i = 0; i < TEST_NS.length; i++) {
       int n = TEST_NS[i];
+      System.out.println(String.format("SIZE %d MATRIX", n));
       int[][] m1 = getRandomMatrix(n);
       int[][] m2 = getRandomMatrix(n);
-      // time traditional and strassen multiplication and see which is faster
-      double startTime = System.nanoTime();
+      // time traditional and strassen multiplication and compare the two
+      double startTime1 = System.nanoTime();
       int[][] normal_res = matrixMultiply(m1, m2);
-      double normalMultTime = System.nanoTime() - startTime;
+      double normalMultTimeMs = (System.nanoTime() - startTime1) / 1e6;
 
       double startTime2 = System.nanoTime();
       int[][] strassen_res = strassenMultiply(m1, m2);
-      double strassenTime = System.nanoTime() - startTime;
+      double strassenTimeMs = (System.nanoTime() - startTime2) / 1e6;
 
-      assert normal_res == strassen_res : "Normal and Strassen Multiply not returning same value"
-      System.out.println(String.format("%s faster for size %d matrix",
-        normalMultTime < strassenTime ? "NORMAL" : "STRASSEN", n));
+      System.out.println(String.format("Normal time: %.06f ms", normalMultTimeMs));
+      System.out.println(String.format("Strassen time: %.06f ms", strassenTimeMs));
+      System.out.println(String.format("%s faster",
+        normalMultTimeMs < strassenTimeMs ? "NORMAL" : "STRASSEN"));
+      System.out.println();
     }
   }
 
@@ -205,7 +209,6 @@ public class Strassen {
     // int m1[][] = {{3,2,4},{5,1,9},{2,3,0}};
     // int m2[][] = {{1,0,2},{6,7,1},{3,9,0}};
     // printMatrix(matrixMultiply(m1, m2));
-    // System.out.println();
     // printMatrix(strassenMultiply(m1, m2));
     findCrossoverPoint();
   }
