@@ -3,6 +3,7 @@ package prog2;
 import java.util.*;
 
 public class Strassen {
+  // traditional matrix multiply
   private static int[][] matrixMultiply(int[][] m1, int[][] m2) {
     int n = m1.length;
     int res[][] = new int[n][n];
@@ -17,27 +18,72 @@ public class Strassen {
     return res;
   }
 
+  // strassen multiplication
   private static int[][] strassenMultiply(int[][] m1, int[][] m2) {
     int n = m1.length;
-    if (n == 1) {
-      return {{m1[1][1] * m2[1][1]}};
-    }
+    // pad matrices with zeros if necessary to reach power of 2 size
     double log2n = Math.log(n) / Math.log(2);
     if (Math.floor(log2n) != Math.ceil(log2n)) {
       n = (int) Math.pow(2, Math.ceil(log2n));
-      int[][] m1_new = new int[n][n];
-      int[][] m2_new = new int[n][n];
-      for (int i = 0; i < m1.length; i++) {
-        m1_new[i] = Arrays.copyOf(m1[i], n);
-        m2_new[i] = Arrays.copyOf(m1[i], n);
-      }
-      m1 = m1_new;
-      m2 = m2_new;
+      m1 = getPaddedMatrix(m1, n);
+      m2 = getPaddedMatrix(m2, n);
     }
-    int[][][]
+    if (n == 1) {
+      int res[][] = {{m1[0][0] * m2[0][0]}};
+      return res;
+    }
+    int[][][] subs1 = getSubmatrices(m1);
+    int[][][] subs2 = getSubmatrices(m2);
+    int[][][] prods = new int[7][n][n];
+    // get products
+    prods[0] = strassenMultiply(subs1[0], sub(subs2[1], subs2[3]));
+    prods[1] = strassenMultiply(add(subs1[0], subs1[1]), subs2[3]);
+    prods[2] = strassenMultiply(add(subs1[2], subs1[3]), subs2[0]);
+    prods[3] = strassenMultiply(subs1[3], sub(subs2[2], subs2[0]));
+    prods[4] = strassenMultiply(add(subs1[0], subs1[3]), add(subs2[0], subs2[3]));
+    prods[5] = strassenMultiply(sub(subs1[1], subs1[3]), add(subs2[2], subs2[3]));
+    prods[6] = strassenMultiply(sub(subs1[0], subs1[2]), add(subs2[0], subs2[1]));
+    // calculate product matrix
+    int[][][] res_subs = new int[4][n / 2][n / 2];
+    res_subs[0] = add(sub(add(prods[4], prods[3]), prods[1]), prods[5]);
+    res_subs[1] = add(prods[0], prods[1]);
+    res_subs[2] = add(prods[2], prods[3]);
+    res_subs[3] = sub(sub(add(prods[0], prods[4]), prods[2]), prods[6]);
+    return combineSubmatrices(res_subs);
+  }
+
+  // adds 2 matrices
+  private static int[][] add(int[][] m1, int[][] m2) {
+    return addOrSub(false, m1, m2);
+  }
+
+  // subtracts 2 matrices
+  private static int[][] sub(int[][] m1, int[][] m2) {
+    return addOrSub(true, m1, m2);
+  }
+
+  // adds or subtracts 2 matrices based on given flag
+  private static int[][] addOrSub(boolean subtract, int[][] m1, int[][] m2) {
+    int n = m1.length;
+    int res[][] = new int[n][n];
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
+        res[i][j] = m1[i][j] + (subtract ? -1 : 1) * m2[i][j];
+      }
+    }
     return res;
   }
 
+  // pads given matrix with zeros until it reaches specified size
+  private static int[][] getPaddedMatrix(int[][] m, int n) {
+    int[][] m_new = new int[n][n];
+    for (int i = 0; i < m.length; i++) {
+      m_new[i] = Arrays.copyOf(m[i], n);
+    }
+    return m_new;
+  }
+
+  // gets the 4 submatrices for Strassen's algorithm
   private static int[][][] getSubmatrices(int[][] m) {
     int n = m.length;
     int n1 = n / 2;
@@ -62,6 +108,31 @@ public class Strassen {
     return submatrices;
   }
 
+  private static int[][] combineSubmatrices(int[][][] submatrices) {
+    int n1 = submatrices[0].length;
+    int n = n1 * 2;
+    int[][] m = new int[n][n];
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
+        if (i < n1) {
+          if (j < n1) {
+            m[i][j] = submatrices[0][i][j];
+          } else {
+            m[i][j] = submatrices[1][i][j - n1];
+          }
+        } else {
+          if (j < n1) {
+            m[i][j] = submatrices[2][i - n1][j];
+          } else {
+            m[i][j] = submatrices[3][i - n1][j - n1];
+          }
+        }
+      }
+    }
+    return m;
+  }
+
+  // prints a matrix
   private static void printMatrix(int[][] m) {
     int n = m.length;
     for (int i = 0; i < n; i++) {
@@ -73,15 +144,6 @@ public class Strassen {
   }
 
   public static void main(String[] args) {
-    int m[][] = {{3,2,4,6}, {5,1,9,4}, {2,3,0,1}, {2,1,8,4}};
-    printMatrix(m);
-    System.out.println();
-    int[][][] submatrices = getSubmatrices(m);
-    for (int i = 0; i < submatrices.length; i++) {
-      printMatrix(submatrices[i]);
-      System.out.println();
-    }
-
     int m1[][] = {{3,2,4}, {5,1,9}, {2,3,0}};
     int m2[][] = {{1,0,2}, {6,7,1}, {3,9,0}};
     printMatrix(matrixMultiply(m1, m2));
