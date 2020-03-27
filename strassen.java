@@ -6,6 +6,9 @@ public class Strassen {
   // traditional matrix multiply
   private static int[][] matrixMultiply(int[][] m1, int[][] m2) {
     int n = m1.length;
+    if (n == 0) {
+      return m1;
+    }
     int res[][] = new int[n][n];
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
@@ -21,16 +24,22 @@ public class Strassen {
   // strassen multiplication
   private static int[][] strassenMultiply(int[][] m1, int[][] m2) {
     int n = m1.length;
-    // pad matrices with zeros if necessary to reach power of 2 size
-    double log2n = Math.log(n) / Math.log(2);
-    if (Math.floor(log2n) != Math.ceil(log2n)) {
-      n = (int) Math.pow(2, Math.ceil(log2n));
-      m1 = getPaddedMatrix(m1, n);
-      m2 = getPaddedMatrix(m2, n);
+    int orig_n = n;
+    // handle base cases
+    if (n == 0) {
+      return m1;
     }
     if (n == 1) {
       int res[][] = {{m1[0][0] * m2[0][0]}};
       return res;
+    }
+    // pad matrices with zeros if necessary to reach power of 2 size
+    double log2n = Math.log(n) / Math.log(2);
+    boolean needToPad = Math.floor(log2n) != Math.ceil(log2n);
+    if (needToPad) {
+      n = (int) Math.pow(2, Math.ceil(log2n));
+      m1 = padMatrix(m1, n);
+      m2 = padMatrix(m2, n);
     }
     int[][][] subs1 = getSubmatrices(m1);
     int[][][] subs2 = getSubmatrices(m2);
@@ -49,7 +58,8 @@ public class Strassen {
     res_subs[1] = add(prods[0], prods[1]);
     res_subs[2] = add(prods[2], prods[3]);
     res_subs[3] = sub(sub(add(prods[0], prods[4]), prods[2]), prods[6]);
-    return combineSubmatrices(res_subs);
+    int[][] res = combineSubmatrices(res_subs);
+    return needToPad ? truncateMatrix(res, orig_n) : res;
   }
 
   // adds 2 matrices
@@ -74,10 +84,19 @@ public class Strassen {
     return res;
   }
 
-  // pads given matrix with zeros until it reaches specified size
-  private static int[][] getPaddedMatrix(int[][] m, int n) {
+  // pads matrix with zeros until it reaches specified size
+  private static int[][] padMatrix(int[][] m, int n) {
     int[][] m_new = new int[n][n];
     for (int i = 0; i < m.length; i++) {
+      m_new[i] = Arrays.copyOf(m[i], n);
+    }
+    return m_new;
+  }
+
+  // truncates matrix until it reaches specified size
+  private static int[][] truncateMatrix(int[][] m, int n) {
+    int[][] m_new = new int[n][n];
+    for (int i = 0; i < n; i++) {
       m_new[i] = Arrays.copyOf(m[i], n);
     }
     return m_new;
@@ -108,6 +127,7 @@ public class Strassen {
     return submatrices;
   }
 
+  // combines 4 submatrices into 1
   private static int[][] combineSubmatrices(int[][][] submatrices) {
     int n1 = submatrices[0].length;
     int n = n1 * 2;
