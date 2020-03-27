@@ -3,7 +3,7 @@ package prog2;
 import java.util.*;
 
 public class Strassen {
-  public static int crossoverPoint;
+  public static int crossoverPoint = 64;
   public static final int[] TEST_NS = {8,16,32,64,128,256,512,1024};
 
   // standard matrix multiply
@@ -195,7 +195,7 @@ public class Strassen {
 
   private static void findCrossoverPoint() {
     for (int i = 0; i < TEST_NS.length; i++) {
-      int n = TEST_NS[i] + 5;
+      int n = TEST_NS[i];
       System.out.println(String.format("SIZE %d MATRIX", n));
       int[][] m1 = getRandomMatrix(n);
       int[][] m2 = getRandomMatrix(n);
@@ -217,13 +217,13 @@ public class Strassen {
   }
 
   public static void main(String[] args) {
-    int[][] m1 = getRandomMatrix(9);
-    int[][] m2 = getRandomMatrix(9);
-    int[][] std_res = stdMultiply(m1, m2);
-    int[][] strassen_res = strassenMultiply(m1, m2);
-    printMatrix(std_res);
-    printMatrix(strassen_res);
-    System.out.println(areEqual(std_res, strassen_res) ? "EQUAL" : "NOT EQUAL!!!");
-    // findCrossoverPoint();
+    // int[][] m1 = getRandomMatrix(9);
+    // int[][] m2 = getRandomMatrix(9);
+    // int[][] std_res = stdMultiply(m1, m2);
+    // int[][] strassen_res = strassenMultiply(m1, m2);
+    // printMatrix(std_res);
+    // printMatrix(strassen_res);
+    // System.out.println(areEqual(std_res, strassen_res) ? "EQUAL" : "NOT EQUAL!!!");
+    findCrossoverPoint();
   }
 }
