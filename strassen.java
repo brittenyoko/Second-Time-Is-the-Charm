@@ -3,8 +3,7 @@ package prog2;
 import java.util.*;
 
 public class Strassen {
-  public static int crossoverPoint = 64;
-  public static final int[] TEST_NS = {8,16,32,64,128,256,512,1024};
+  public static final int[] TEST_NS = {8,16,32,64,128,256,512,1024, 2048};
 
   // standard matrix multiply
   private static int[][] stdMultiply(int[][] m1, int[][] m2) {
@@ -24,8 +23,13 @@ public class Strassen {
     return res;
   }
 
-  // strassen multiplication
+  // strassen multiplication with no crossover point
   private static int[][] strassenMultiply(int[][] m1, int[][] m2) {
+    strassenMultiply(m1, m2, 0);
+  }
+
+  // strassen multiplication with given crossover point
+  private static int[][] strassenMultiply(int[][] m1, int[][] m2, int crossoverPoint) {
     int n = m1.length;
     int orig_n = n;
     // handle base cases
@@ -195,15 +199,21 @@ public class Strassen {
 
   private static void findCrossoverPoint() {
     for (int i = 0; i < TEST_NS.length; i++) {
-      int n = TEST_NS[i];
+      int n = TEST_NS[i] + 1;
       System.out.println(String.format("SIZE %d MATRIX", n));
       int[][] m1 = getRandomMatrix(n);
       int[][] m2 = getRandomMatrix(n);
       // time traditional and strassen multiplication and compare the two
-      double startTime1 = System.nanoTime();
-      int[][] std_res = stdMultiply(m1, m2);
-      double stdMultTimeMs = (System.nanoTime() - startTime1) / 1e6;
-      System.out.println(String.format("Standard time: %.06f ms", stdMultTimeMs));
+      double stdMultTimeMs;
+      if (n > 1100) {
+        stdMultTimeMs = Double.MAX_VALUE;
+        System.out.println("Standard time: N/A");
+      } else {
+        double startTime1 = System.nanoTime();
+        int[][] std_res = stdMultiply(m1, m2);
+        stdMultTimeMs = (System.nanoTime() - startTime1) / 1e6;
+        System.out.println(String.format("Standard time: %.06f ms", stdMultTimeMs));
+      }
 
       double startTime2 = System.nanoTime();
       int[][] strassen_res = strassenMultiply(m1, m2);
