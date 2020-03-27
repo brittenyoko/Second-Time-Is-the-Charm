@@ -19,16 +19,23 @@ public class Strassen {
 
   private static int[][] strassenMultiply(int[][] m1, int[][] m2) {
     int n = m1.length;
-    int res[][] = new int[n][n];
-    for (int i = 0; i < n; i++) {
-      for (int j = 0; j < n; j++) {
-        res[i][j] = 0;
-        for (int k = 0; k < n; k++) {
-          res[i][j] += m1[i][k] * m2[k][j];
-        }
-      }
+    int log2n = Math.log(n) / Math.log(2);
+    if (floor(log2n) != ceil(log2n)) {
+      Arrays.copyOf(m1, Math.pow(2, ceil(log2n)));
+      Arrays.copyOf(m2, Math.pow(2, ceil(log2n)));
     }
-    return res;
+    printMatrix(m1);
+    printMatrix(m2);
+    // int res[][] = new int[n][n];
+    // for (int i = 0; i < n; i++) {
+    //   for (int j = 0; j < n; j++) {
+    //     res[i][j] = 0;
+    //     for (int k = 0; k < n; k++) {
+    //       res[i][j] += m1[i][k] * m2[k][j];
+    //     }
+    //   }
+    // }
+    // return res;
   }
 
   private static int[][][] getSubmatrices(int[][] m) {
