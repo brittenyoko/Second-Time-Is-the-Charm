@@ -1,11 +1,90 @@
 package prog2;
 
 import java.util.*;
+import java.io.*;
 
 public class Strassen {
-  private static final SplittableRandom rand = new SplittableRandom();
+  private static final SplittableRandom RAND = new SplittableRandom();
   private static final List<Integer> TEST_NS =
-    new ArrayList<>(Arrays.asList(8,16,32,64,128,256,512,1024));
+    new ArrayList<>(Arrays.asList(8,16,32,64,128,256,512,1024,2048));
+  private static final int CROSSOVER = 160;
+
+  public static void main(String[] args) {
+    // check args
+    if (args.length == 0) {
+      findBestCrossovers();
+      return;
+    }
+    if (args.length != 3) {
+      throw new IllegalArgumentException("Missing or extra strassen arguments");
+    }
+    int dim = Integer.valueOf(args[1]);
+    String fileName = args[2];
+    if (dim < 0) {
+      throw new IllegalArgumentException("Invalid dim arg");
+    } else {
+      int n_lines = 2 * (int) Math.pow(dim, 2);
+      int half_lines = n_lines / 2;
+      int[][][] matrices = new int[2][dim][dim];
+      int[][] vals = new int[2][half_lines];
+      try {
+        // read file into matrices
+        FileInputStream fstream = new FileInputStream(fileName);
+        BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
+        int i = 0;
+        String line = null;
+        int matrix = 0;
+        while (i < n_lines) {
+          line = br.readLine();
+          if (i < half_lines) {
+            vals[0][i] = Integer.valueOf(line);
+          } else {
+            vals[1][i - half_lines] = Integer.valueOf(line);
+          }
+          i++;
+        }
+        fstream.close();
+        matrices[0] = listToMatrix(vals[0]);
+        matrices[1] = listToMatrix(vals[1]);
+        // do strassen multiply on the matrices and print the diagonal
+        printDiagonal(strassenMultiply(matrices[0], matrices[1]));
+      } catch(Exception e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
+  // converts 1D list of matrix values to 2D matrix
+  private static int[][] listToMatrix(int[] vals) {
+    int n = (int) Math.sqrt(vals.length);
+    int[][] m = new int[n][n];
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
+        m[i][j] = vals[i * n + j];
+      }
+    }
+    return m;
+  }
+
+  // prints diagonal of matrix with trailing new line
+  private static void printDiagonal(int[][] m) {
+    for (int i = 0; i < m.length; i++) {
+      System.out.println(m[i][i]);
+    }
+    System.out.println();
+  }
+
+  // prints a matrix
+  private static void printMatrix(int[][] m) {
+    int n = m.length;
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
+        System.out.print(m[i][j] + " ");
+      }
+      System.out.println();
+    }
+    System.out.println();
+  }
 
   // standard matrix multiply
   private static int[][] stdMultiply(int[][] m1, int[][] m2) {
@@ -23,6 +102,11 @@ public class Strassen {
       }
     }
     return res;
+  }
+
+  // strassen multiplication with default crossover point
+  private static int[][] strassenMultiply(int[][] m1, int[][] m2) {
+    return strassenMultiply(m1, m2, CROSSOVER);
   }
 
   // strassen multiplication with given crossover point
@@ -159,40 +243,18 @@ public class Strassen {
     return m;
   }
 
-  // prints a matrix
-  private static void printMatrix(int[][] m) {
-    int n = m.length;
-    for (int i = 0; i < n; i++) {
-      for (int j = 0; j < n; j++) {
-        System.out.print(m[i][j] + " ");
-      }
-      System.out.println();
-    }
-    System.out.println();
-  }
-
-  // checks that two matrices are equal
-  private static boolean areEqual(int[][] m1, int[][] m2) {
-    for (int i = 0; i < m1.length; i++) {
-      if (!Arrays.equals(m1[i], m2[i])) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   // gets matrix of size n randomly filled with 0s or 1s
   private static int[][] getRandomMatrix(int n) {
     int[][] m = new int[n][n];
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
-        m[i][j] = rand.nextInt(10) % 2;
+        m[i][j] = RAND.nextInt(10) % 2;
       }
     }
     return m;
   }
 
-  private static void findCrossoverPoint() {
+  private static void findBestCrossovers() {
     Map<Integer, List<Integer>> best_crossovers = new LinkedHashMap<>();
     int trials = 15;
     int incr = 4;
@@ -205,7 +267,7 @@ public class Strassen {
       }
       List<Double> avg_times = new ArrayList<>();
       double min_avg_time = Double.MAX_VALUE;
-      int start = n >= 128 ? (n >= 1024 ? 160 : 40) : 0;
+      int start = n >= 128 ? (n >= 1024 ? 100 : 40) : 0;
       int end = n >= 1024 ? 300 : 200;
       // test different crossover points in increments of 'incr'
       for (int crossover = start; crossover < Math.min(end, n + incr); crossover += incr) {
@@ -257,7 +319,13 @@ public class Strassen {
     return str;
   }
 
-  public static void main(String[] args) {
-    findCrossoverPoint();
+  // checks that two matrices are equal
+  private static boolean areEqual(int[][] m1, int[][] m2) {
+    for (int i = 0; i < m1.length; i++) {
+      if (!Arrays.equals(m1[i], m2[i])) {
+        return false;
+      }
+    }
+    return true;
   }
 }
