@@ -7,51 +7,70 @@ public class Strassen {
   private static final SplittableRandom RAND = new SplittableRandom();
   private static final List<Integer> TEST_NS =
     new ArrayList<>(Arrays.asList(8,16,32,64,128,256,512,1024,2048));
-  private static final int CROSSOVER = 160;
+  private static final int CROSSOVER = 136;
+
+  private static final int NORMAL_FLAG = 0;
+  private static final int FIND_CROSSOVERS_FLAG = 1;
+  private static final int COMPARE_STD_AND_STRASSEN_FLAG = 2;
 
   public static void main(String[] args) {
     // check args
     if (args.length == 0) {
+      throw new IllegalArgumentException("Missing strassen argument(s)");
+    }
+    int flag = Integer.valueOf(args[0]);
+    if (flag < 0 || flag > 2) {
+      throw new IllegalArgumentException("Invalid flag");
+    }
+    if (flag == FIND_CROSSOVERS_FLAG) {
       findBestCrossovers();
-      return;
-    }
-    if (args.length != 3) {
-      throw new IllegalArgumentException("Missing or extra strassen arguments");
-    }
-    int dim = Integer.valueOf(args[1]);
-    String fileName = args[2];
-    if (dim < 0) {
-      throw new IllegalArgumentException("Invalid dim arg");
+    } else if (flag == COMPARE_STD_AND_STRASSEN_FLAG) {
+      compareStrassenAndStd();
     } else {
-      int n_lines = 2 * (int) Math.pow(dim, 2);
-      int half_lines = n_lines / 2;
-      int[][][] matrices = new int[2][dim][dim];
-      int[][] vals = new int[2][half_lines];
-      try {
-        // read file into matrices
-        FileInputStream fstream = new FileInputStream(fileName);
-        BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
-        int i = 0;
-        String line = null;
-        int matrix = 0;
-        while (i < n_lines) {
-          line = br.readLine();
-          if (i < half_lines) {
-            vals[0][i] = Integer.valueOf(line);
-          } else {
-            vals[1][i - half_lines] = Integer.valueOf(line);
-          }
-          i++;
-        }
-        fstream.close();
-        matrices[0] = listToMatrix(vals[0]);
-        matrices[1] = listToMatrix(vals[1]);
-        // do strassen multiply on the matrices and print the diagonal
+      if (args.length != 3) {
+        throw new IllegalArgumentException("Missing or extra strassen arguments");
+      }
+      int dim = Integer.valueOf(args[1]);
+      String fileName = args[2];
+      if (dim < 0) {
+        throw new IllegalArgumentException("Invalid dim arg");
+      } else {
+        // do strassen multiply on the matrices in the file and print the diagonal
+        int[][][] matrices = txtFileToMatrices(fileName, dim);
         printDiagonal(strassenMultiply(matrices[0], matrices[1]));
-      } catch(Exception e) {
-        e.printStackTrace();
       }
     }
+  }
+
+  // reads txt file into two matrices
+  private static int[][][] txtFileToMatrices (String fileName, int dim) {
+    int n_lines = 2 * (int) Math.pow(dim, 2);
+    int half_lines = n_lines / 2;
+    int[][][] matrices = new int[2][dim][dim];
+    int[][] vals = new int[2][half_lines];
+    try {
+      // read file into matrices
+      FileInputStream fstream = new FileInputStream(fileName);
+      BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
+      int i = 0;
+      String line = null;
+      int matrix = 0;
+      while (i < n_lines) {
+        line = br.readLine();
+        if (i < half_lines) {
+          vals[0][i] = Integer.valueOf(line);
+        } else {
+          vals[1][i - half_lines] = Integer.valueOf(line);
+        }
+        i++;
+      }
+      fstream.close();
+      matrices[0] = listToMatrix(vals[0]);
+      matrices[1] = listToMatrix(vals[1]);
+    } catch(Exception e) {
+      e.printStackTrace();
+    }
+    return matrices;
   }
 
   // converts 1D list of matrix values to 2D matrix
@@ -254,6 +273,7 @@ public class Strassen {
     return m;
   }
 
+  // run strassens on different sized matrices with different crossover pts to find the optimal
   private static void findBestCrossovers() {
     Map<Integer, List<Integer>> best_crossovers = new LinkedHashMap<>();
     int trials = 15;
@@ -294,7 +314,7 @@ public class Strassen {
       List<Integer> crossovers_within = new ArrayList<>();
       for (int i = 0; i < avg_times.size(); i++) {
         double time = avg_times.get(i);
-        if ((time - min_avg_time) / min_avg_time <= percent_within * .01) {
+        if ((time - min_avg_time) / min_avg_time < percent_within * .01) {
           crossovers_within.add(start + incr * i);
         }
       }
@@ -304,6 +324,50 @@ public class Strassen {
       System.out.println();
     }
     System.out.println("BEST CROSSOVERS:\n" + crossoversMapToStr(best_crossovers));
+  }
+
+  // use both strassens and standard mult. on different size matrices and see which is faster
+  private static void compareStrassenAndStd() {
+    int trials = 10;
+    for (int n : TEST_NS) {
+      System.out.print(String.format("SIZE %d MATRIX", n));
+      // create random matrices to test on
+      int[][][] matrices = new int[trials * 2][n][n];
+      for (int i = 0; i < matrices.length; i++) {
+        matrices[i] = getRandomMatrix(n);
+      }
+      List<Double> std_times_ms = new ArrayList<>();
+      List<Double> strassen_times_ms = new ArrayList<>();
+      for (int i = 0; i < trials; i++) {
+        // perform standard and strassen multiplication on the matrices
+        System.out.print(".");
+        double stdMultTimeMs;
+        if (n >= 2048) {
+          if (i == 0) {
+            std_times_ms.add(Double.MAX_VALUE);
+          }
+        } else {
+          double startTime1 = System.nanoTime();
+          stdMultiply(matrices[i * 2], matrices[i * 2 + 1]);
+          std_times_ms.add((System.nanoTime() - startTime1) / 1e6);
+        }
+        double startTime2 = System.nanoTime();
+        strassenMultiply(matrices[i * 2], matrices[i * 2 + 1]);
+        strassen_times_ms.add((System.nanoTime() - startTime2) / 1e6);
+      }
+      // get average time of the trials for both methods and compare the two
+      double std_avg = std_times_ms.stream().mapToDouble(a -> a).average().getAsDouble();
+      double strassen_avg = strassen_times_ms.stream().mapToDouble(a -> a).average().getAsDouble();
+      System.out.println(String.format("\nTRADITIONAL AVG TIME: %s",
+        std_avg == Double.MAX_VALUE ? "N/A" : String.format("%.03f ms", std_avg)));
+      System.out.println(String.format("STRASSEN AVG TIME: %.03f ms", strassen_avg));
+      if (Math.abs((std_avg - strassen_avg) / std_avg) < 0.1) {
+        System.out.println("  ABOUT EQUAL\n");
+      } else {
+        System.out.println(String.format("  %s faster\n",
+          std_avg < strassen_avg ? "TRADITIONAL" : "STRASSEN"));
+      }
+    }
   }
 
   // converts map from matrix size to best range of crossovers to a string for printing
