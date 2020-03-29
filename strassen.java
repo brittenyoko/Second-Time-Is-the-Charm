@@ -4,7 +4,8 @@ import java.util.*;
 
 public class Strassen {
   private static final SplittableRandom rand = new SplittableRandom();
-  private static final int[] TEST_NS = {8,16,32,64,128,256,512,1024,2048};
+  private static final List<Integer> TEST_NS =
+    new ArrayList<>(Arrays.asList(8,16,32,64,128,256,512,1024));
 
   // standard matrix multiply
   private static int[][] stdMultiply(int[][] m1, int[][] m2) {
@@ -192,40 +193,69 @@ public class Strassen {
   }
 
   private static void findCrossoverPoint() {
-    List<Double> avg_times = new ArrayList<>();
-    int n = 512;
+    Map<Integer, List<Integer>> best_crossovers = new LinkedHashMap<>();
     int trials = 15;
     int incr = 4;
-    // create random matrices to test on
-    int[][][] matrices = new int[trials * 2][n][n];
-    for (int i = 0; i < matrices.length; i++) {
-      matrices[i] = getRandomMatrix(n);
-    }
-    double min_avg_time = Double.MAX_VALUE;
-    int counter = 0;
+    int percent_within = 5;
     // test different crossover points in increments of 'incr'
-    for (int crossover = 40; crossover < 200; crossover += incr) {
-      System.out.println(String.format("TESTING CROSSOVER AT SIZE %d...",
-        crossover));
-      List<Double> times = new ArrayList<>();
-      for (int i = 0; i < trials; i++) {
-        System.out.print(".");
-        double startTime = System.nanoTime();
-        strassenMultiply(matrices[i * 2], matrices[i * 2 + 1], crossover);
-        times.add((System.nanoTime() - startTime) / 1e6);
+    for (int n : TEST_NS) {
+      // create random matrices to test on
+      int[][][] matrices = new int[trials * 2][n][n];
+      for (int i = 0; i < matrices.length; i++) {
+        matrices[i] = getRandomMatrix(n);
       }
-      // get average time of all the trials
-      double avg = times.stream().mapToDouble(a -> a).average().getAsDouble();
-      System.out.println(String.format("AVG TIME: %.03f ms\n", avg));
-      avg_times.add(avg);
-      min_avg_time = Math.min(min_avg_time, avg);
+      List<Double> avg_times = new ArrayList<>();
+      double min_avg_time = Double.MAX_VALUE;
+      int start = n >= 128 ? (n >= 1024 ? 160 : 40) : 0;
+      int end = n >= 1024 ? 300 : 200;
+      for (int crossover = start; crossover < Math.min(end, n + incr); crossover += incr) {
+        System.out.println(String.format("TESTING %dx%d MATRIX, CROSSOVER AT SIZE %d...",
+          n, n, crossover));
+        List<Double> times = new ArrayList<>();
+        for (int i = 0; i < trials; i++) {
+          System.out.print(".");
+          double startTime = System.nanoTime();
+          strassenMultiply(matrices[i * 2], matrices[i * 2 + 1], crossover);
+          times.add((System.nanoTime() - startTime) / 1e6);
+        }
+        // get average time of all the trials
+        double avg = times.stream().mapToDouble(a -> a).average().getAsDouble();
+        System.out.println(String.format("AVG TIME: %.03f ms\n", avg));
+        avg_times.add(avg);
+        min_avg_time = Math.min(min_avg_time, avg);
+      }
+      // find the crossover point that resulted in the lowest avg time
+      int min_index = avg_times.indexOf(min_avg_time);
+      int best_crossover = start + incr * min_index;
+      best_crossover = best_crossover > n ? n : best_crossover;
+      // calculate range of crossovers that result in time within certain percent of best
+      List<Integer> crossovers_within = new ArrayList<>();
+      for (int i = 0; i < avg_times.size(); i++) {
+        double time = avg_times.get(i);
+        if ((time - min_avg_time) / min_avg_time <= percent_within * .01) {
+          crossovers_within.add(start + incr * i);
+        }
+      }
+      Collections.sort(crossovers_within);
+      crossovers_within.add(0, best_crossover);
+      best_crossovers.put(n, crossovers_within);
+      System.out.println();
     }
-    // find the crossover point that resulted in the lowest avg time
-    int min_index = avg_times.indexOf(min_avg_time);
-    int best_crossover = 40 + incr * min_index;
-    System.out.println("BEST CROSSOVER: " + String.valueOf(best_crossover));
+    System.out.println("BEST CROSSOVERS: " + crossoversMapToStr(best_crossovers));
   }
-  // got best as 64, 72
+
+  // converts map from matrix size to best range of crossovers to a string for printing
+  private static String crossoversMapToStr(Map<Integer, List<Integer>> map) {
+    String str = "";
+    for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
+      int n = entry.getKey();
+      List<Integer> crossovers = entry.getValue();
+      int best_crossover = crossovers.get(0);
+      crossovers.remove(0);
+      str += String.format("%d -> %d, %s\n", n, best_crossover, crossovers.toString());
+    }
+    return str;
+  }
 
   public static void main(String[] args) {
     findCrossoverPoint();
