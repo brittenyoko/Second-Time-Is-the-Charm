@@ -197,7 +197,6 @@ public class Strassen {
     int trials = 15;
     int incr = 4;
     int percent_within = 5;
-    // test different crossover points in increments of 'incr'
     for (int n : TEST_NS) {
       // create random matrices to test on
       int[][][] matrices = new int[trials * 2][n][n];
@@ -208,6 +207,7 @@ public class Strassen {
       double min_avg_time = Double.MAX_VALUE;
       int start = n >= 128 ? (n >= 1024 ? 160 : 40) : 0;
       int end = n >= 1024 ? 300 : 200;
+      // test different crossover points in increments of 'incr'
       for (int crossover = start; crossover < Math.min(end, n + incr); crossover += incr) {
         System.out.println(String.format("TESTING %dx%d MATRIX, CROSSOVER AT SIZE %d...",
           n, n, crossover));
@@ -241,7 +241,7 @@ public class Strassen {
       best_crossovers.put(n, crossovers_within);
       System.out.println();
     }
-    System.out.println("BEST CROSSOVERS: " + crossoversMapToStr(best_crossovers));
+    System.out.println("BEST CROSSOVERS:\n" + crossoversMapToStr(best_crossovers));
   }
 
   // converts map from matrix size to best range of crossovers to a string for printing
