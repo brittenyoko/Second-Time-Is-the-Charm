@@ -287,7 +287,7 @@ public class Strassen {
       }
       List<Double> avg_times = new ArrayList<>();
       double min_avg_time = Double.MAX_VALUE;
-      int start = n >= 128 ? (n >= 1024 ? 80 : 40) : 0;
+      int start = n >= 128 ? (n >= 1024 ? 100 : 40) : 0;
       int end = n >= 1024 ? 300 : 256;
       // test different crossover points in increments of 'incr'
       for (int crossover = start; crossover < Math.min(end, n + incr); crossover += incr) {
