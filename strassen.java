@@ -6,7 +6,7 @@ import java.io.*;
 public class Strassen {
   private static final SplittableRandom RAND = new SplittableRandom();
   private static final List<Integer> TEST_NS =
-    new ArrayList<>(Arrays.asList(8,16,32,64,128,256,512,1024,2048));
+    new ArrayList<>(Arrays.asList(2,4,8,16,32,64,128,256,512,1024,2048));
   private static final int CROSSOVER = 136;
 
   private static final int NORMAL_FLAG = 0;
@@ -287,8 +287,8 @@ public class Strassen {
       }
       List<Double> avg_times = new ArrayList<>();
       double min_avg_time = Double.MAX_VALUE;
-      int start = n >= 128 ? (n >= 1024 ? 100 : 40) : 0;
-      int end = n >= 1024 ? 300 : 200;
+      int start = n >= 128 ? (n >= 1024 ? 80 : 40) : 0;
+      int end = n >= 1024 ? 300 : 256;
       // test different crossover points in increments of 'incr'
       for (int crossover = start; crossover < Math.min(end, n + incr); crossover += incr) {
         System.out.println(String.format("TESTING %dx%d MATRIX, CROSSOVER AT SIZE %d...",
