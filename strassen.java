@@ -40,7 +40,7 @@ public class Strassen {
         printDiagonal(strassenMultiply(matrices[0], matrices[1]));
       }
     }
-    System.out.println(triangles(graphMaker(.01)))
+    System.out.println(triangles(graphMaker(.01)));
   }
 
   // reads txt file into two matrices
@@ -400,28 +400,30 @@ public class Strassen {
 
     for (int i = 0; i < 1024; i++) {
       for (int j = 0; j < 1024; j++) {
-        rand = RAND.nextInt(.05)
-        if (rand <= p)
+        rand = RAND.nextInt(.05);
+        if (rand <= p) {
           mat_rand[i][j] = 1;
-        else:
+        }
+        else {
           mat_rand[i][j] = 0;
+        }
       }
     }
     return mat_rand;
   }
   // Takes in a random graph of 1024 vertices and returns the number of triangles
   private static float triangles(int[][] mat_rand){
-      A = graphMaker(.01)
-      B = strassenMultiply(A,A)
-      C = strassenMultiply(A,B)
+      A = graphMaker(.01);
+      B = strassenMultiply(A,A);
+      C = strassenMultiply(A,B);
       float sum = 0;
       for (int i = 0; i < 1024; i++) {
         for (int j = 0; j < 1024; j++) {
           if (i == j) {
-            sum = sum + C[i][j]
+            sum = sum + C[i][j];
           }
         }
       }
-      return sum / 6
+      return sum / 6;
   }
 }
