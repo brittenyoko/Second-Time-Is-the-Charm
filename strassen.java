@@ -392,24 +392,24 @@ public class Strassen {
     }
     return true;
   }
-  // Creates random graph of 1024 vertices
+  // Creates random graph of 1024 vertices with some given probability p
   private static int [][] graphMaker(p){
     int[][] mat_rand = new int[1024][1024];
 
     for (int i = 0; i < 1024; i++) {
       for (int j = 0; j < 1024; j++) {
-        rand = RAND.nextInt(.5)
+        rand = RAND.nextInt(.05)
         if (rand <= p)
-          mat_rand[i][j] = 0;
+          mat_rand[i][j] = 1;
         else:
-          mat_rand[i][j] = 1
+          mat_rand[i][j] = 0;
       }
     }
     return mat_rand;
   }
   // Takes in a random graph of 1024 vertices and returns the number if triangles
   private static int triangles(int[][] mat_rand){
-      A = graphMaker(.1)
+      A = graphMaker(.01)
       B = strassenMultiply(A,A)
       C = strassenMultiply(A,B)
       int sum = 0;
