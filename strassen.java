@@ -194,7 +194,7 @@ public class Strassen {
     return res;
   }
 
-  // pads matrix with zeros until it reaches nearest even size if odd
+  // pads matrix with zeros until it reaches size n
   private static int[][] padMatrix(int[][] m, int n) {
     int[][] m_new = new int[n][n];
     for (int i = 0; i < m.length; i++) {
@@ -392,6 +392,7 @@ public class Strassen {
     }
     return true;
   }
+
   // Creates random graph of 1024 vertices with some given probability p
   private static int [][] graphMaker(p){
     int[][] mat_rand = new int[1024][1024];
@@ -407,7 +408,8 @@ public class Strassen {
     }
     return mat_rand;
   }
-  // Takes in a random graph of 1024 vertices and returns the number if triangles
+
+  // Takes in a random graph of 1024 vertices and returns the number of triangles
   private static int triangles(int[][] mat_rand){
       A = graphMaker(.01)
       B = strassenMultiply(A,A)
