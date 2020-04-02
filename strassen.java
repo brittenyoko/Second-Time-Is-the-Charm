@@ -8,7 +8,7 @@ public class Strassen {
   private static final List<Integer> TEST_NS =
     new ArrayList<>(Arrays.asList(2,4,8,16,32,64,128,256,512,1024,2048));
   private static final int CROSSOVER = 136;
-
+  private static final int TRIANGLES = 3;
   private static final int NORMAL_FLAG = 0;
   private static final int FIND_CROSSOVERS_FLAG = 1;
   private static final int COMPARE_STD_AND_STRASSEN_FLAG = 2;
@@ -19,14 +19,19 @@ public class Strassen {
       throw new IllegalArgumentException("Missing strassen argument(s)");
     }
     int flag = Integer.valueOf(args[0]);
-    if (flag < 0 || flag > 2) {
+    if (flag < 0 || flag > 5) {
       throw new IllegalArgumentException("Invalid flag");
     }
     if (flag == FIND_CROSSOVERS_FLAG) {
       findBestCrossovers();
-    } else if (flag == COMPARE_STD_AND_STRASSEN_FLAG) {
+    }
+      else if (flag == COMPARE_STD_AND_STRASSEN_FLAG) {
       compareStrassenAndStd();
-    } else {
+    }
+    if (flag == TRIANGLES) {
+        result();
+    }
+     else {
       if (args.length != 3) {
         throw new IllegalArgumentException("Missing or extra strassen arguments");
       }
@@ -40,7 +45,6 @@ public class Strassen {
         printDiagonal(strassenMultiply(matrices[0], matrices[1]));
       }
     }
-    System.out.println(triangles(graphMaker(.01)));
   }
 
   // reads txt file into two matrices
@@ -399,7 +403,7 @@ public class Strassen {
     int[][] mat_rand = new int[1024][1024];
     for (int i = 0; i < 1024; i++) {
       for (int j = 0; j < 1024; j++) {
-        int rand = RAND.nextInt(100) / 10;
+        int rand = RAND.nextInt(100);
         mat_rand[i][j] = rand < p * 100 ? 1 : 0;
       }
     }
@@ -408,7 +412,7 @@ public class Strassen {
 
   // Takes in a random graph of 1024 vertices and returns the number of triangles
   private static float triangles(int[][] mat_rand){
-      int[][] A = graphMaker(.01);
+      int[][] A = mat_rand;
       int[][] B = strassenMultiply(A,A);
       int[][] C = strassenMultiply(A,B);
       float sum = 0;
@@ -420,5 +424,11 @@ public class Strassen {
         }
       }
       return sum / 6;
+  }
+  private static void result() {
+    for (int i = 0; i < 5; i++) {
+      Float flt = triangles(graphMaker(.03));
+      System.out.println(flt);
+    }
   }
 }
