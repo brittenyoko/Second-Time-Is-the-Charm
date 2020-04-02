@@ -8,10 +8,11 @@ public class Strassen {
   private static final List<Integer> TEST_NS =
     new ArrayList<>(Arrays.asList(2,4,8,16,32,64,128,256,512,1024,2048));
   private static final int CROSSOVER = 136;
-  private static final int TRIANGLES = 3;
+
   private static final int NORMAL_FLAG = 0;
   private static final int FIND_CROSSOVERS_FLAG = 1;
   private static final int COMPARE_STD_AND_STRASSEN_FLAG = 2;
+  private static final int TRIANGLES_FLAG = 3;
 
   public static void main(String[] args) {
     // check args
@@ -28,7 +29,7 @@ public class Strassen {
       else if (flag == COMPARE_STD_AND_STRASSEN_FLAG) {
       compareStrassenAndStd();
     }
-    if (flag == TRIANGLES) {
+    if (flag == TRIANGLES_FLAG) {
         triangle_count();
     }
      else {
