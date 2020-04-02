@@ -1,5 +1,3 @@
-package prog2;
-
 import java.util.*;
 import java.io.*;
 
