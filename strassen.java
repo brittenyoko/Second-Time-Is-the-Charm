@@ -29,7 +29,7 @@ public class Strassen {
       compareStrassenAndStd();
     }
     if (flag == TRIANGLES) {
-        result();
+        triangle_count();
     }
      else {
       if (args.length != 3) {
@@ -425,10 +425,35 @@ public class Strassen {
       }
       return sum / 6;
   }
-  private static void result() {
+  private static void triangle_count() {
+    float temp = 0;
     for (int i = 0; i < 5; i++) {
-      Float flt = triangles(graphMaker(.03));
-      System.out.println(flt);
+      temp = temp + triangles(graphMaker(.05));
     }
+    System.out.println("The number of triangles when p = .05 is: " + temp /5);
+
+    temp = 0;
+    for (int i = 0; i < 5; i++) {
+      temp = temp + triangles(graphMaker(.04));
+    }
+    System.out.println("The number of triangles when p = .04 is: " + temp /5);
+
+    temp = 0;
+    for (int i = 0; i < 5; i++) {
+      temp = temp + triangles(graphMaker(.03));
+    }
+    System.out.println("The number of triangles when p = .03 is: " + temp /5);
+
+    temp = 0;
+    for (int i = 0; i < 5; i++) {
+      temp = temp + triangles(graphMaker(.02));
+    }
+    System.out.println("The number of triangles when p = .02 is: " + temp /5);
+
+    temp = 0;
+    for (int i = 0; i < 5; i++) {
+      temp = temp + triangles(graphMaker(.01));
+    }
+    System.out.println("The number of triangles when p = .01 is: " + temp /5);
   }
 }
